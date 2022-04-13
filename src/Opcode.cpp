@@ -6,6 +6,18 @@ using namespace Instruction;
 OpcodeTableMap OpcodeTable = {
     /* {Byte Code, Opcode {OpName name, int len, int cycles, AddressingMode mode}} */
     {0x00, {BRK, 1, 7, AddressingMode::Implicit}},
+    {0x08, {PHP, }},
+    {0x10, {BPL, }},
+    {0x18, {CLC, }},
+    {0x20, {JSR, }},
+    {0x24, {BIT, }},
+    {0x28, {PLP, }},
+    {0x2c, {BIT, }},
+    {0x30, {BMI, }},
+    {0x38, {SEC, }},
+
+
+
     {0xaa, {TAX, 1, 2, AddressingMode::Implicit}},
 
     {0xa9, {LDA, 2, 2, AddressingMode::Immediate}},
@@ -23,5 +35,6 @@ OpcodeTableMap OpcodeTable = {
     {0x9d, {STA, 3, 5, AddressingMode::Absolute_X}},
     {0x99, {STA, 3, 5, AddressingMode::Absolute_Y}},
     {0x81, {STA, 2, 6, AddressingMode::Indirect_X}},
-    {0x91, {STA, 2, 6, AddressingMode::Indirect_Y}}
+    {0x91, {STA, 2, 6, AddressingMode::Indirect_Y}},
+
 };

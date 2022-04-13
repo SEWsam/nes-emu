@@ -177,6 +177,11 @@ void CPU::execute()
             memWrite(opaddr, A);
             break;
         }
+        
+        case LDY: {
+            memWrite(opaddr, Y);
+            break;
+        }
 
         default:
             throw std::runtime_error("Unimplemented instruction.");

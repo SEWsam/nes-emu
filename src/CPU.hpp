@@ -53,6 +53,7 @@ public:
     void loadRun(std::vector<uint8_t> prog);
     void run();
     void step();
+    uint8_t reta() {return A;}
 
     void execute();
 
