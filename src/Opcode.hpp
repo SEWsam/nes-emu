@@ -19,7 +19,10 @@ enum class AddressingMode
     Absolute_Y,
     Indirect_X,
     Indirect_Y,
-    Implicit
+    Accumulator,
+    Relative,
+    Implicit,
+    Indirect
 };
 
 namespace Instruction {

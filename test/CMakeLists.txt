@@ -1,0 +1,3 @@
+list(APPEND TEST-SOURCES 
+    ${CMAKE_CURRENT_LIST_DIR}/CPU_test.cpp
+)

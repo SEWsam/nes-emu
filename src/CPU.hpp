@@ -8,6 +8,7 @@
 #include <array>
 
 
+
 class CPU
 {
 private:
@@ -38,24 +39,33 @@ private:
 
     std::array<uint8_t, 0xFFFF> memory;
 
+    Opcode currentOpcode;
 
-public:
+
     uint8_t memRead(uint16_t addr);
     uint16_t memRead16(uint16_t addr);
-
     void memWrite(uint16_t addr, uint8_t data);
     void memWrite16(uint16_t addr, uint16_t data);
 
+    uint8_t genericRead();
+    uint16_t genericRead16();
+    void genericWrite(uint8_t val);
+
     uint16_t getOperandAddr(AddressingMode mode);
 
+
+    void execute();
+
+    friend class CPUDebugger;
+
+public:
     void reset();
     void load(std::vector<uint8_t> prog);
     void loadRun(std::vector<uint8_t> prog);
-    void run();
-    void step();
-    uint8_t reta() {return A;}
 
-    void execute();
+    void run();    
+    void step();
+
 
 
 };

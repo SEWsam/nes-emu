@@ -1,12 +1,37 @@
 #include "CPU.hpp"
 
 #include "Opcode.hpp"
+#include "util.hpp"
 
 // std
 #include <iostream>
 #include <exception>
 #include <vector>
 #include <algorithm>
+
+
+// inline flag calculation
+namespace {
+    inline bool checkZero(uint8_t val)
+    {
+        if (val == 0)
+        {
+            return true;
+        }
+
+        return false; 
+    }
+
+    inline bool checkNegative(uint8_t val)
+    {
+        if (nth_bit(val, 7))
+        {
+            return true;
+        }
+
+        return false;
+    }
+}
 
 uint8_t CPU::memRead(uint16_t addr)
 {
@@ -43,6 +68,36 @@ void CPU::memWrite16(uint16_t addr, uint16_t data)
     uint8_t mostSigByte = (data >> 8);
     memWrite(addr, leastSigByte);
     memWrite(addr + 1, mostSigByte);
+}
+
+uint8_t CPU::genericRead()
+{
+    if (currentOpcode.mode == AddressingMode::Accumulator)
+    {
+        return A;
+    }
+    else
+    {
+        return memRead(getOperandAddr(currentOpcode.mode));
+    }
+}
+
+// branch or jump
+uint16_t CPU::genericRead16()
+{
+
+}
+
+void CPU::genericWrite(uint8_t data)
+{
+    if (currentOpcode.mode == AddressingMode::Accumulator)
+    {
+        A = data;
+    }
+    else
+    {
+        memWrite(getOperandAddr(currentOpcode.mode), data);
+    }
 }
 
 
@@ -161,27 +216,98 @@ void CPU::execute()
 {
     using namespace Instruction;
     // move to loop / run?
-    Opcode opcode = OpcodeTable[memRead(PC)];
-    uint16_t nextPC = PC + opcode.len;
-    uint16_t opaddr = getOperandAddr(opcode.mode);
+    currentOpcode = OpcodeTable[memRead(PC)];
+    uint16_t nextPC = PC + currentOpcode.len;
 
-    switch (opcode.name) 
+    switch (currentOpcode.name) 
     {
-        case LDA: {
-            // todo: overflow flag and whatnot
-            A += memRead(opaddr);
+        case AND: { 
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            A = A & memRead(opaddr);
+            
+            P.Z = checkZero(A);
+            P.N = checkNegative(A);
             break;
         }
 
-        case STA: {
-            memWrite(opaddr, A);
+        case ASL: {
+            auto operand = genericRead();
+            P.C = operand & (0x01 << 7);
+
+            operand << 1;
+            genericWrite(operand);
+
+            P.C = checkZero(operand);
+            P.N = checkNegative(operand);
             break;
         }
-        
-        case LDY: {
-            memWrite(opaddr, Y);
+
+        case BCC: {
+            // todo: branch instructions - advance cycles properly.
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            if (P.C == 0)
+            {
+                nextPC = PC + memRead(opaddr);
+            }
             break;
         }
+
+        case BCS: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            if (P.C == 1)
+            {
+                nextPC = PC + memRead(opaddr);
+            }
+            break;
+        }
+
+        case BEQ: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            if (P.Z == 1)
+            {
+                nextPC = PC + memRead(opaddr);
+            }
+            break;
+        }
+
+        case BIT: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            auto operand = memRead(opaddr);
+
+            P.Z = (A & operand) == 0;
+            P.V = nth_bit(operand, 6);
+            P.N = nth_bit(operand, 7);
+            break;
+        }
+
+        case BMI: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            if (P.N == 1)
+            {
+                nextPC = PC + memRead(opaddr);
+            }
+            break;
+        }
+
+        case BNE: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            if (P.Z == 0)
+            {
+                nextPC = PC + memRead(opaddr);
+            }
+            break;
+        }
+
+        case BPL: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            if (P.N == 0)
+            {
+                nextPC = PC + memRead(opaddr);
+            }
+            break;
+        }
+
+
 
         default:
             throw std::runtime_error("Unimplemented instruction.");

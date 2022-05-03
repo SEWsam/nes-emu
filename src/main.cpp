@@ -1,5 +1,6 @@
 #include "Opcode.hpp"
 #include "CPU.hpp"
+#include "debug/Debugger.hpp"
 
 // std
 #include <vector>
@@ -9,9 +10,10 @@
 std::vector<uint8_t> prog = {
     0xa9, 0x0c,        // LDA #$0c
     0x8d, 0x20, 0x00,  // STA $0020
-    0xa5, 0x1f,
-    0xad, 0x00, 0x00, 
-    0x85, 0x11, 0x00,
+    0xa9, 0x1f,
+    0x85, 0x10,
+    0xa9, 0x00, 
+    0x85, 0x11,
     0xa0, 0x01,
     0xb1, 0x10,
     0x19 // error 
@@ -31,6 +33,9 @@ int main(int argc, char** argv) {
             break;
         }
     }
+
+    CPUDebugger dbg{std::cout, cpu};
+    dbg.printRegisters();
 
     return 0;
 }
