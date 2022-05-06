@@ -1,10 +1,16 @@
-#include "Opcode.hpp"
-#include "CPU.hpp"
-#include "debug/Debugger.hpp"
+#include <Opcode.hpp>
+#include <CPU.hpp>
+
+#ifndef DEBUG
+#define CPUDEBUGGER_USE_NULL_DEFAULT_CONSOLE
+#endif
+#include <debug/Debugger.hpp>
 
 // std
 #include <vector>
 #include <iostream>
+
+
 
 
 std::vector<uint8_t> prog = {
@@ -34,7 +40,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    CPUDebugger dbg{std::cout, cpu};
+    CPUDebugger dbg{cpu};
     dbg.printRegisters();
 
     return 0;

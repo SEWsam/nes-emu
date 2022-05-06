@@ -6,7 +6,17 @@ struct OpcodeGenPair
 {
     unsigned char code;
     int genData;
-    std::function<void(CPUDebugger)> cpuSetup;
+};
+
+struct GeneratedCPUData
+{
+    uint8_t A;
+    uint8_t X;
+    uint8_t Y;
+
+    uint8_t memory[0xFFFF];
+
+    uint16_t operand;
 };
 
 
@@ -32,7 +42,6 @@ public:
             case AddressingMode::Immediate: {
                 auto data = Catch::Generators::random(1, 255).get();
                 pair = OpcodeGenPair{code, data};
-                pair.cpuSetup = [](CPUDebugger dbg) {};
                 break;
             }
             

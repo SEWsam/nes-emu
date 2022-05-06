@@ -1,7 +1,7 @@
-#include "CPU.hpp"
+#include <CPU.hpp>
 
-#include "Opcode.hpp"
-#include "util.hpp"
+#include <Opcode.hpp>
+#include <util.hpp>
 
 // std
 #include <iostream>

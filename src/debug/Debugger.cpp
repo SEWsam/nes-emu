@@ -1,4 +1,4 @@
-#include "Debugger.hpp"
+#include <debug/Debugger.hpp>
 
 // std
 #include <iostream>
@@ -17,5 +17,10 @@ void CPUDebugger::printRegisters(std::ostream& out)
 
 void CPUDebugger::printRegisters()
 {
-    printRegisters(console);
+    printRegisters(defaultConsole);
+}
+
+void CPUDebugger::executeInstruction(Byte opcode, uint16_t operand)
+{
+    auto op = OpcodeTable[opcode];
 }

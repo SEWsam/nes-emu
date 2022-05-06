@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 template <typename T>
 constexpr bool nth_bit(T num, int pos) { return (num >> pos) & 1;}
 

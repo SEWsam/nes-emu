@@ -8,20 +8,7 @@
 #include <array>
 
 
-
-class CPU
-{
-private:
-    // Registers
-    uint16_t PC;
-    uint8_t SP;
-
-    uint8_t A;
-    uint8_t X;
-    uint8_t Y;
-    union
-    {
-        // P flags
+using PFlags = union {
         struct 
         {
             uint8_t C : 1;
@@ -34,7 +21,21 @@ private:
             uint8_t N : 1;
         };
         uint8_t raw;
-    } P;
+};
+
+
+class CPU
+{
+private:
+    // Registers
+    uint16_t PC;
+    uint8_t SP;
+
+    uint8_t A;
+    uint8_t X;
+    uint8_t Y;
+
+    PFlags P;
 
 
     std::array<uint8_t, 0xFFFF> memory;

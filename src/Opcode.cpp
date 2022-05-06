@@ -1,4 +1,4 @@
-#include "Opcode.hpp"
+#include <Opcode.hpp>
 
 using namespace Instruction;
 
