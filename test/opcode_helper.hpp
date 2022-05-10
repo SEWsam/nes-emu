@@ -1,76 +1,29 @@
 #pragma once
 
-#include <catch2/catch.hpp>
 
-struct OpcodeGenPair
+#include <optional>
+#include <vector>
+
+inline std::vector<uint8_t> program(unsigned char opcode, std::optional<uint16_t> operand = std::nullopt) 
 {
-    unsigned char code;
-    int genData;
-};
-
-struct GeneratedCPUData
-{
-    uint8_t A;
-    uint8_t X;
-    uint8_t Y;
-
-    uint8_t memory[0xFFFF];
-
-    uint16_t operand;
-};
-
-
-class OpcodePairGenerator : public Catch::Generators::IGenerator<OpcodeGenPair>
-{
-    OpcodeGenPair pair;
-
-    unsigned char code;
-    AddressingMode mode;
-
-public:
-    OpcodePairGenerator(unsigned char code, AddressingMode mode) : code(code), mode(mode)
+    std::vector<uint8_t> prog;
+    prog.push_back(opcode);
+    if (operand)
     {
-        static_cast<void>(next());
-    }
-
-    OpcodeGenPair const& get() const override;
-    bool next() override
-    {
-        // todo: implement all cases, provide function to setup CPU based on addressing mode and sample values.
-        switch (mode)
+        auto op = *operand;
+        if ((op >> 8) != 0) 
         {
-            case AddressingMode::Immediate: {
-                auto data = Catch::Generators::random(1, 255).get();
-                pair = OpcodeGenPair{code, data};
-                break;
-            }
-            
-            case AddressingMode::ZeroPage: {
-                auto data = Catch::Generators::random(20, 30).get();
-                pair = OpcodeGenPair{code, data};
-                break;
-            }
-
-            case AddressingMode::ZeroPage_X: {
-                auto data = Catch::Generators::random(20, 30).get();
-                pair = OpcodeGenPair{code, data};
-                break;
-            }
+            uint8_t leastSigByte = (op & 0xff);
+            uint8_t mostSigByte = (op >> 8);
+            prog.push_back(leastSigByte);
+            prog.push_back(mostSigByte);
         }
-
-        return true;
+        else
+        {
+            prog.push_back((op & 0xff));
+        }
     }
-};
 
-OpcodeGenPair const& OpcodePairGenerator::get() const 
-{
-    return pair;
+    return prog;
 }
 
-Catch::Generators::GeneratorWrapper<OpcodeGenPair> opcode(unsigned char code, AddressingMode mode)
-{
-    return Catch::Generators::GeneratorWrapper<OpcodeGenPair>(std::unique_ptr<Catch::Generators::IGenerator<OpcodeGenPair>>(new OpcodePairGenerator{code, mode}));
-}
-
-
-#define OPC(count, code, mode) take(count, opcode(code, mode))

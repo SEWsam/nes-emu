@@ -3,6 +3,16 @@
 // std
 #include <iostream>
 
+
+void CPUDebugger::checkPtr()
+{
+    if (cpuPtr == nullptr)
+    {
+        throw std::runtime_error("Pointer to CPU in CPUDebugger is invalid.");
+    }
+}
+
+
 void CPUDebugger::printRegisters(std::ostream& out)
 {
     out <<
@@ -20,7 +30,27 @@ void CPUDebugger::printRegisters()
     printRegisters(defaultConsole);
 }
 
-void CPUDebugger::executeInstruction(Byte opcode, uint16_t operand)
+
+void CPUDebugger::memWrite(uint16_t addr, uint8_t val)
 {
-    auto op = OpcodeTable[opcode];
+    checkPtr();
+    cpuPtr->memWrite(addr, val);
+}
+
+void CPUDebugger::memWrite16(uint16_t addr, uint16_t val)
+{
+    checkPtr();
+    cpuPtr->memWrite16(addr, val);
+}
+
+uint8_t CPUDebugger::memRead(uint16_t addr)
+{
+    checkPtr();
+    return cpuPtr->memRead(addr);
+}
+
+uint16_t CPUDebugger::memRead16(uint16_t addr)
+{
+    checkPtr();
+    return cpuPtr->memRead16(addr);
 }

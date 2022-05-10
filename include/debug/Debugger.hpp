@@ -6,8 +6,8 @@
 #include <iostream>
 #define DEFAULT_CONSOLE std::cout
 #else
-#include "global_ns.hpp"
-#define DEFAULT_CONSOLE  global_ns
+#include "../util.hpp"
+#define DEFAULT_CONSOLE  nullstream
 #endif
 
 
@@ -43,8 +43,16 @@ public:
     uint8_t& Y() & {return cpuPtr->Y;};
     uint8_t&& Y() && {return std::move(cpuPtr->Y);};
 
-    const PFlags& P() const& {return cpuPtr->P;};
-    PFlags& P() & {return cpuPtr->P;};
-    PFlags&& P() && {return std::move(cpuPtr->P);};
+    const CPUFlags& P() const& {return cpuPtr->P;};
+    CPUFlags& P() & {return cpuPtr->P;};
+    CPUFlags&& P() && {return std::move(cpuPtr->P);};
+
+    const uint16_t& PC() const& {return cpuPtr->PC;};
+
+    void memWrite(uint16_t addr, uint8_t val);
+    void memWrite16(uint16_t addr, uint16_t val);
+
+    uint8_t memRead(uint16_t addr);
+    uint16_t memRead16(uint16_t addr);
     // todo: once busses are implemented, allow both bus-based "safe" memory writing, and forced "unsafe" writes.
 };

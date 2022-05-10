@@ -8,7 +8,7 @@
 #include <array>
 
 
-using PFlags = union {
+using CPUFlags = union {
         struct 
         {
             uint8_t C : 1;
@@ -35,8 +35,7 @@ private:
     uint8_t X;
     uint8_t Y;
 
-    PFlags P;
-
+    CPUFlags P;
 
     std::array<uint8_t, 0xFFFF> memory;
 

@@ -107,6 +107,8 @@ uint16_t CPU::getOperandAddr(AddressingMode mode)
 
     switch (mode)
     {
+        // relative and immediate both return an immediate value
+        case AddressingMode::Relative:
         case AddressingMode::Immediate: {
             return imm;
         }
@@ -218,6 +220,7 @@ void CPU::execute()
     // move to loop / run?
     currentOpcode = OpcodeTable[memRead(PC)];
     uint16_t nextPC = PC + currentOpcode.len;
+    bool branched = false;
 
     switch (currentOpcode.name) 
     {
@@ -232,12 +235,12 @@ void CPU::execute()
 
         case ASL: {
             auto operand = genericRead();
-            P.C = operand & (0x01 << 7);
+            P.C = nth_bit(operand, 7);
 
-            operand << 1;
+            operand = operand << 1;
             genericWrite(operand);
 
-            P.C = checkZero(operand);
+            P.Z = checkZero(operand);
             P.N = checkNegative(operand);
             break;
         }
@@ -308,12 +311,14 @@ void CPU::execute()
         }
 
 
-
         default:
             throw std::runtime_error("Unimplemented instruction.");
             break;
     }
 
     // todo: is this right?
-    PC = nextPC;
+    if (!branched)
+    {
+        PC = nextPC;
+    }
 }
