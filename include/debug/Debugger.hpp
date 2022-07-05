@@ -54,5 +54,11 @@ public:
 
     uint8_t memRead(uint16_t addr);
     uint16_t memRead16(uint16_t addr);
+
+    void sPush8(uint8_t val);
+    void sPush16(uint16_t val);
+    uint8_t sPop8();
+    uint16_t sPop16();
+
     // todo: once busses are implemented, allow both bus-based "safe" memory writing, and forced "unsafe" writes.
 };

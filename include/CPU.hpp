@@ -51,6 +51,11 @@ private:
     uint16_t genericRead16();
     void genericWrite(uint8_t val);
 
+    void sPush8(uint8_t val);
+    void sPush16(uint16_t val);
+    uint8_t sPop8();
+    uint16_t sPop16();
+
     uint16_t getOperandAddr(AddressingMode mode);
 
 

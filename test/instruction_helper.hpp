@@ -27,3 +27,18 @@ inline std::vector<uint8_t> program(unsigned char opcode, std::optional<uint16_t
     return prog;
 }
 
+#define BRANCH_TEST(opcode, flag_name, val) \
+    auto rel = GENERATE(range(1, 255)); \
+    auto flag_name = GENERATE(0, 1); \
+    auto prog = program(opcode, rel); \
+    cpu.load(prog); \
+    cpu.reset(); \
+    uint16_t startPC = dbg.PC(); \
+    dbg.P().flag_name = flag_name; \
+    cpu.step(); \
+    if (flag_name == val) { \
+        REQUIRE(dbg.PC() == (startPC + rel)); \
+    } else { \
+        REQUIRE(dbg.PC() == (startPC + 2)); \
+    }
+

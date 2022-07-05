@@ -100,6 +100,30 @@ void CPU::genericWrite(uint8_t data)
     }
 }
 
+void CPU::sPush8(uint8_t val)
+{
+    // use var for stack base? (0x0100)
+    memWrite(0x0100 + SP--, val);
+}
+
+void CPU::sPush16(uint16_t val)
+{
+    sPush8((val >> 8));
+    sPush8((val & 0xff));
+}
+
+uint8_t CPU::sPop8()
+{
+    ++SP;
+    return memRead(0x0100 + SP);
+}
+
+uint16_t CPU::sPop16()
+{
+    uint8_t leastSigByte = sPop8();
+    uint8_t mostSigByte = sPop8();
+    return (mostSigByte << 8) | leastSigByte;
+}
 
 uint16_t CPU::getOperandAddr(AddressingMode mode) 
 {
@@ -237,7 +261,7 @@ void CPU::execute()
             auto operand = genericRead();
             P.C = nth_bit(operand, 7);
 
-            operand = operand << 1;
+            operand <<= 1;
             genericWrite(operand);
 
             P.Z = checkZero(operand);
@@ -275,7 +299,7 @@ void CPU::execute()
 
         case BIT: {
             const auto opaddr = getOperandAddr(currentOpcode.mode);
-            auto operand = memRead(opaddr);
+            const auto operand = memRead(opaddr);
 
             P.Z = (A & operand) == 0;
             P.V = nth_bit(operand, 6);
@@ -307,6 +331,223 @@ void CPU::execute()
             {
                 nextPC = PC + memRead(opaddr);
             }
+            break;
+        }
+
+        case BVC: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            if (P.V == 0)
+            {
+                nextPC = PC + memRead(opaddr);
+            }
+            break;
+        }
+
+        case BVS: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            if (P.V == 1)
+            {
+                nextPC = PC + memRead(opaddr);
+            }
+            break;
+        }
+
+        case CLC: {
+            P.C = 0;
+            break;
+        }
+
+        case CLD: {
+            P.D = 0;
+            break;
+        }
+
+        case CLI: {
+            P.I = 0;
+            break;
+        }
+
+        case CLV: {
+            P.V = 0;
+            break;
+        }
+
+        case CMP: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            const uint8_t op = memRead(opaddr);
+            const uint8_t res = A - op;
+
+            P.C = (A >= op);
+            P.Z = checkZero(res);
+            
+            P.N = checkNegative(res);
+            break;
+        }
+
+        case CPX: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            const uint8_t op = memRead(opaddr);
+            const uint8_t res = X - op;
+
+            P.C = (X >= op);
+            P.Z = checkZero(res);
+            P.N = checkNegative(res);
+            break;
+        }
+        
+        case CPY: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            const uint8_t op = memRead(opaddr);
+            const uint8_t res = Y - op;
+
+            P.C = (Y >= op);
+            P.Z = checkZero(res);
+            P.N = checkNegative(res);
+            break;
+        }
+
+        case DEC: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            const uint8_t op = memRead(opaddr);
+            const uint8_t res = op - 1;
+
+            memWrite(opaddr, res);
+
+            P.Z = checkZero(res);
+            P.N = checkNegative(res);
+            break;
+        }
+
+        case DEX: {
+            X -= 1;
+            P.Z = checkZero(X);
+            P.N = checkNegative(X);
+            break;
+        }
+
+        case DEY: {
+            Y -= 1;
+            P.Z = checkZero(Y);
+            P.N = checkNegative(Y);
+            break;
+        }
+
+        case EOR: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            const uint8_t op = memRead(opaddr);
+            
+            A ^= op;
+
+            P.Z = checkZero(A);
+            P.N = checkNegative(A);
+            break;
+        }
+
+        case INC: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            const uint8_t op = memRead(opaddr);
+            const uint8_t res = op + 1;
+
+            memWrite(opaddr, res);
+
+            P.Z = checkZero(res);
+            P.N = checkNegative(res);
+            break;
+        }
+
+        case INX: {
+            X += 1;
+            P.Z = checkZero(X);
+            P.N = checkNegative(X);
+            break;
+        }
+        
+        case INY: {
+            Y += 1;
+            P.Z = checkZero(Y);
+            P.N = checkNegative(Y);
+            break;
+        }
+
+        case JMP: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            nextPC = memRead16(opaddr);
+            break;
+        }
+
+        case JSR: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            // bug prone?
+            SP = PC - 1;
+            nextPC = memRead16(opaddr); 
+            break;
+        }
+
+        case LDA: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            A = memRead(opaddr);
+            P.Z = checkZero(A);
+            P.N = checkNegative(A);
+            break;
+        }
+
+        case LDX: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            X = memRead(opaddr);
+            P.Z = checkZero(X);
+            P.N = checkNegative(X);
+            break;
+        }
+        
+        case LDY: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            Y = memRead(opaddr);
+            P.Z = checkZero(Y);
+            P.N = checkNegative(Y);
+            break;
+        }
+
+        case LSR: {
+            auto operand = genericRead();
+            P.C = nth_bit(operand, 0);
+
+            operand >>= 1;
+            genericWrite(operand);
+
+            P.Z = checkZero(operand);
+            break;
+        }
+
+        case NOP: {
+            // me when
+            break;
+        }
+
+        case ORA: {
+            const auto opaddr = getOperandAddr(currentOpcode.mode);
+            A |= memRead(opaddr);
+            P.Z = checkZero(A);
+            P.N = checkNegative(A);
+            break;
+        }
+
+        case PHA: {
+            sPush8(A);
+            break;
+        }
+
+        case PHP: {
+            sPush8(P.raw);
+            break;
+        }
+
+        case PLA: {
+            A = sPop8();
+            break;
+        }
+
+        case PLP: {
+            P.raw = sPop8();
             break;
         }
 

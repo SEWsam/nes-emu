@@ -54,3 +54,27 @@ uint16_t CPUDebugger::memRead16(uint16_t addr)
     checkPtr();
     return cpuPtr->memRead16(addr);
 }
+
+void CPUDebugger::sPush8(uint8_t val)
+{
+    checkPtr();
+    return cpuPtr->sPush8(val);
+}
+
+void CPUDebugger::sPush16(uint16_t val)
+{
+    checkPtr();
+    return cpuPtr->sPush16(val);
+}
+
+uint8_t CPUDebugger::sPop8()
+{
+    checkPtr();
+    return cpuPtr->sPop8();
+}
+
+uint16_t CPUDebugger::sPop16()
+{
+    checkPtr();
+    return cpuPtr->sPop16();
+}

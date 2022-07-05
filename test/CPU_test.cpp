@@ -6,7 +6,7 @@
 #include <debug/Debugger.hpp>
 #include <Opcode.hpp>
 
-#include "opcode_helper.hpp"
+#include "instruction_helper.hpp"
 
 #include <vector>
 
@@ -57,70 +57,15 @@ TEST_CASE("The emulated CPU generates valid results for each instruction", "[CPU
     }
 
     SECTION("BCC (RELATIVE)") {
-        auto rel = GENERATE(take(50, random(1, 255)));
-        auto C = GENERATE(0, 1);
-
-        auto prog = program(0x90, rel);
-        cpu.load(prog);
-        cpu.reset();
-
-        uint16_t startPC = dbg.PC();
-
-        dbg.P().C = C;
-
-        cpu.step();
-
-        // carry set
-        if (C == 1) {
-            REQUIRE(dbg.PC() == (startPC + 2));
-        } else {  // carry not set
-            REQUIRE(dbg.PC() == (startPC + rel));
-        }
+        BRANCH_TEST(0x90, C, 0);
     }
 
     SECTION("BCS (RELATIVE)") {
-        auto rel = GENERATE(take(50, random(1, 255)));
-        auto C = GENERATE(0, 1);
-
-        auto prog = program(0xB0, rel);
-        cpu.load(prog);
-        cpu.reset();
-
-        uint16_t startPC = dbg.PC();
-
-        dbg.P().C = C;
-
-        cpu.step();
-
-        // carry not set
-        if (C == 0) {
-            REQUIRE(dbg.PC() == (startPC + 2));
-        } else {  // carry set
-            REQUIRE(dbg.PC() == (startPC + rel));
-        }
+        BRANCH_TEST(0xb0, C, 1);
     }
     
     SECTION("BEQ (RELATIVE)") {
-        auto rel = GENERATE(take(50, random(1, 255)));
-        auto Z = GENERATE(0, 1);
-
-        auto prog = program(0xf0, rel);
-        cpu.load(prog);
-        cpu.reset();
-
-        uint16_t startPC = dbg.PC();
-
-        dbg.P().Z = Z;
-
-        cpu.step();
-
-        // zero not set
-        if (Z == 0) {
-            REQUIRE(dbg.PC() == (startPC + 2));
-
-        } else {  // zero set
-            REQUIRE(dbg.PC() == (startPC + rel));
-        }
+        BRANCH_TEST(0xf0, Z, 1);
     }
 
     SECTION("BIT (ZeroPage)") {
@@ -143,70 +88,183 @@ TEST_CASE("The emulated CPU generates valid results for each instruction", "[CPU
     }
 
     SECTION("BMI (RELATIVE)") {
-        auto rel = GENERATE(take(50, random(1, 255)));
-        auto N = GENERATE(0, 1);
-
-        auto prog = program(0x30, rel);
-        cpu.load(prog);
-        cpu.reset();
-
-        uint16_t startPC = dbg.PC();
-
-        dbg.P().N = N;
-
-        cpu.step();
-
-        // negative not set
-        if (N == 0) {
-            REQUIRE(dbg.PC() == (startPC + 2));
-        } else {  // negative set
-            REQUIRE(dbg.PC() == (startPC + rel));
-        }
+        BRANCH_TEST(0x30, N, 1);
     }
     
     SECTION("BNE (RELATIVE)") {
-        auto rel = GENERATE(take(50, random(1, 255)));
-        auto Z = GENERATE(0, 1);
-
-        auto prog = program(0xd0, rel);
-        cpu.load(prog);
-        cpu.reset();
-
-        uint16_t startPC = dbg.PC();
-
-        dbg.P().Z = Z;
-
-        cpu.step();
-
-        // zero set
-        if (Z == 1) {
-            REQUIRE(dbg.PC() == (startPC + 2));
-        } else {  // zero clear
-            REQUIRE(dbg.PC() == (startPC + rel));
-        }
+        BRANCH_TEST(0xd0, Z, 0);
     }
 
     SECTION("BPL (RELATIVE)") {
-        auto rel = GENERATE(take(50, random(1, 255)));
-        auto N = GENERATE(0, 1);
+        BRANCH_TEST(0x10, N, 0);
+    }
 
-        auto prog = program(0x10, rel);
+    SECTION("BVC (RELATIVE)") {
+        BRANCH_TEST(0x50, V, 0);
+    }
+
+    SECTION("BVS (RELATIVE)") {
+        BRANCH_TEST(0x70, V, 1);
+    }
+
+    SECTION("CLC (Implied)") {
+        auto prog = program(0x18);
+        cpu.load(prog);
+        cpu.reset();
+        cpu.step();
+
+        REQUIRE(dbg.P().C == 0);
+    }
+    
+    SECTION("CLD (Implied)") {
+        auto prog = program(0x18);
+        cpu.load(prog);
+        cpu.reset();
+        cpu.step();
+
+        REQUIRE(dbg.P().D == 0);
+    }
+
+    SECTION("CLI (Implied)") {
+        auto prog = program(0x58);
+        cpu.load(prog);
+        cpu.reset();
+        cpu.step();
+
+        REQUIRE(dbg.P().I == 0);
+    }
+
+    SECTION("CLV (Implied)") {
+        auto prog = program(0xb8);
+        cpu.load(prog);
+        cpu.reset();
+        cpu.step();
+
+        REQUIRE(dbg.P().V == 0);
+    }
+
+    SECTION("CMP (Immediate)") {
+        auto A = GENERATE(range(0, 255));
+        auto val = GENERATE(range(0, 255));
+        
+        const uint8_t res = A - val;
+
+        auto prog = program(0xc9, val);
         cpu.load(prog);
         cpu.reset();
 
-        uint16_t startPC = dbg.PC();
-
-        dbg.P().N = N;
+        dbg.A() = A;
 
         cpu.step();
 
-        // negative set
-        if (N == 1) {
-            REQUIRE(dbg.PC() == (startPC + 2));
-        } else {  // negative clear
-            REQUIRE(dbg.PC() == (startPC + rel));
+        if (A >= val)
+        {
+            REQUIRE(dbg.P().C == 1);
+        }
+        if (A == val)
+        {
+            REQUIRE(dbg.P().Z == 1);
+        }
+        if (nth_bit(res, 7))
+        {
+            REQUIRE(dbg.P().N == 1);
         }
     }
 
-    
+    SECTION("CPX (Immediate)") {
+        auto X = GENERATE(range(0, 255));
+        auto val = GENERATE(range(0, 255));
+
+        const uint8_t res = X - val;
+
+        auto prog = program(0xe0, val);
+        cpu.load(prog);
+        cpu.reset();
+
+        dbg.X() = X;
+
+        cpu.step();
+
+        if (X >= val)
+        {
+            REQUIRE(dbg.P().C == 1);
+        }
+        if (X == val)
+        {
+            REQUIRE(dbg.P().Z == 1);
+        }
+        if (nth_bit(res, 7))
+        {
+            REQUIRE(dbg.P().N == 1);
+        }
+    }
+
+    SECTION("CPY (Immediate)") {
+        auto Y = GENERATE(range(0, 255));
+        auto val = GENERATE(range(0, 255));
+
+        const uint8_t res = Y - val;
+
+        auto prog = program(0xc0, val);
+        cpu.load(prog);
+        cpu.reset();
+
+        dbg.Y() = Y;
+
+        cpu.step();
+
+        if (Y >= val)
+        {
+            REQUIRE(dbg.P().C == 1);
+        }
+        if (Y == val)
+        {
+            REQUIRE(dbg.P().Z == 1);
+        }
+        if (nth_bit(res, 7))
+        {
+            REQUIRE(dbg.P().N == 1);
+        }
+    }
+
+    SECTION("DEC (ZeroPage)") {
+        uint8_t addr = GENERATE(range(0, 255));
+        auto val = GENERATE(range(0, 255));
+
+        const uint8_t res = val - 1;
+
+        auto prog = program(0xc6, addr);
+        cpu.load(prog);
+        cpu.reset();
+
+        dbg.memWrite(addr, val);
+        
+        cpu.step();
+
+        if (res == 0)
+        {
+            REQUIRE(dbg.P().Z == 1);
+        }
+        if (nth_bit(res, 7))
+        {
+            REQUIRE(dbg.P().N == 1);
+        }
+
+        REQUIRE(dbg.memRead(addr) == res);
+    }
+
+    SECTION("PHA (Accumulator)") {
+        uint8_t A = GENERATE(range(0, 255));
+
+        auto prog = program(0x48);
+        cpu.load(prog);
+        cpu.reset();
+
+        dbg.A() = A;
+
+        cpu.step();
+
+        REQUIRE(dbg.sPop8() == A);
+    }
+
 }
